@@ -1,0 +1,159 @@
+:root {
+  --primary-orange: #e67e22;
+  --dark-orange: #d35400;
+  --light-orange: #fdf2e9;
+  --white: #ffffff;
+  --black: #333333;
+  --transition: all 0.3s ease-in-out;
+}
+
+/* Base Navbar */
+.navbar {
+  background-color: var(--white);
+  padding: 0.5rem 0;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 1000;
+  transition: var(--transition);
+}
+
+.navbar.scrolled {
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 0.3rem 0;
+}
+
+.navbar-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2rem;
+}
+
+.logo {
+  height: 60px;
+  width: auto;
+  transition: var(--transition);
+}
+
+/* Navigation Links */
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.nav-link {
+  color: var(--black);
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  transition: var(--transition);
+  position: relative;
+}
+
+/* Boutons spécifiques */
+.sign-up {
+  border: 2px solid var(--primary-orange);
+  border-radius: 25px;
+  padding: 0.5rem 1.5rem !important;
+  color: var(--primary-orange) !important;
+}
+
+.login {
+  background-color: var(--primary-orange);
+  color: var(--white) !important;
+  border-radius: 25px;
+  padding: 0.5rem 1.5rem !important;
+}
+
+/* Menu Hamburger */
+.hamburger-menu {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  z-index: 1001;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.hamburger-line {
+  width: 30px;
+  height: 3px;
+  background-color: var(--black);
+  transition: var(--transition);
+  transform-origin: left center;
+}
+
+.hamburger-menu.active .hamburger-line:nth-child(1) {
+  transform: rotate(45deg) translateY(-2px);
+}
+
+.hamburger-menu.active .hamburger-line:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger-menu.active .hamburger-line:nth-child(3) {
+  transform: rotate(-45deg) translateY(2px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar-container {
+    padding: 0 1rem;
+  }
+
+  .hamburger-menu {
+    display: flex;
+  }
+
+  .nav-links {
+    position: fixed;
+    top: 70px;
+    right: -100%;
+    width: 100%;
+    max-width: 300px;
+    height: calc(100vh - 70px);
+    background-color: var(--white);
+    flex-direction: column;
+    gap: 1rem;
+    padding: 2rem 1rem;
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+    transition: right 0.3s ease-in-out;
+  }
+
+  .nav-links.active {
+    right: 0;
+  }
+
+  .nav-link {
+    width: 100%;
+    text-align: center;
+    padding: 1rem !important;
+    border-bottom: 1px solid var(--light-orange);
+  }
+
+  .sign-up, .login {
+    margin-top: 1rem;
+    width: 100%;
+  }
+}
+
+/* Effets au survol */
+.nav-link:hover {
+  color: var(--primary-orange);
+  transform: translateY(-2px);
+}
+
+.sign-up:hover {
+  background-color: var(--light-orange);
+}
+
+.login:hover {
+  background-color: var(--dark-orange);
+}
