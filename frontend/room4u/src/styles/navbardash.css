@@ -1,0 +1,252 @@
+
+
+.navbar-dash {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0 ;
+  background-color: #ffffff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  z-index: 1000;
+  width: 100%;
+  top:0;
+  height: 70px;
+  
+  left: 0;
+  right: 0;
+}
+
+.nav-left .logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.nav-icons {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.nav-icon {
+  font-size: 1.3rem;
+  color: #4b5563;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.nav-icon:hover {
+  color: #2563eb;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-btn {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  box-shadow: 0 2px 5px rgba(37, 99, 235, 0.3);
+}
+
+.profile-section {
+  position: relative;
+  cursor: pointer;
+}
+
+.profile-pic {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e5e7eb;
+  transition: border-color 0.3s ease;
+}
+
+.profile-pic:hover {
+  border-color: #2563eb;
+}
+
+.profile-dropdown {
+  position: absolute;
+  right: 0;
+  top: 50px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+  min-width: 180px;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  padding: 0.8rem 1.2rem;
+  color: #4b5563;
+  transition: all 0.3s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f3f4f6;
+  color: #2563eb;
+}
+
+.logout {
+  color: #ef4444;
+  border-top: 1px solid #e5e7eb;
+}
+
+.logout:hover {
+  background-color: #fee2e2;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar-dash {
+    padding: 1rem;
+  }
+
+  .nav-icons {
+    gap: 1rem;
+  }
+
+  .nav-icon {
+    font-size: 1.1rem;
+  }
+
+  .add-btn {
+    width: 30px;
+    height: 30px;
+  }
+
+  .profile-pic {
+    width: 35px;
+    height: 35px;
+  }
+}
+
+
+
+
+
+
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.logo {
+  height: 3rem; /* Ajustez selon votre besoin */
+  width: 15rem;
+  object-fit: contain;
+  transition: all 0.3s ease;
+}
+
+.logo:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
+}
+
+
+/* Style du bouton Match */
+.match-btn {
+  background: linear-gradient(135deg, #FF6B6B, #FF4757);
+  color: white;
+  border-radius: 25px;
+  padding: 0.5rem 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(255, 107, 107, 0.3);
+}
+
+.match-btn:hover {
+  background: linear-gradient(135deg, #FF4757, #FF3355);
+  transform: translateY(-1px);
+}
+
+.match-btn svg {
+  font-size: 1.1rem;
+}
+
+.match-btn span {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Responsive pour mobile */
+@media (max-width: 768px) {
+  .match-btn span {
+    display: none; /* Cache le texte sur mobile */
+  }
+  
+  .match-btn {
+    padding: 0.5rem;
+    border-radius: 50%;
+  }
+  
+  .match-btn svg {
+    font-size: 1.2rem;
+  }
+}
+
+
+
+
+/* Ajouter une séparation visuelle */
+.profile-dropdown .dropdown-item:not(.logout) {
+  border-bottom: 1px solid #eee;
+}
+
+/* Espacement amélioré */
+.profile-dropdown .dropdown-item {
+  padding: 0.8rem 1.5rem;
+  text-decoration: none;
+  color: #2d3436;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+}
+
+/* Hover state */
+.profile-dropdown .dropdown-item:hover {
+  background: #f8f9fa;
+  color: #6c5ce7;
+}
+
+/* Icône (optionnelle) */
+.profile-dropdown .dropdown-item::before {
+  content: '📋';
+  margin-right: 0.8rem;
+  opacity: 0.7;
+}
+
+.profile-dropdown .logout::before {
+  content: '🚪';
+}
+
+
+
+
+
+
+
+
+

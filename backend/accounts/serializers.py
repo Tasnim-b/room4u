@@ -2,6 +2,46 @@ from rest_framework import serializers
 from .models import User, Message,Notification, AnnonceColcChercheur,AnnonceProprietaire,AnnonceColocProposeur,Favoris,Matching,FomulaireTestCompatibilite
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth.hashers import make_password
+
+User = get_user_model()
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True, min_length=8)
+
+    class Meta:
+        model = User
+        fields = ['email', 'password', 'nom', 'prenom', 'sexe', 'date_de_naissance', 'avatar', 'role']
+
+    def create(self, validated_data):
+        validated_data['password'] = make_password(validated_data['password'])  # hash du mot de passe
+        return super().create(validated_data)
+    
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Ajouter l'URL de redirection selon le rôle
+        if instance.role == 'proprietaire':
+            data['redirect_url'] = '/Dashboard'
+        else:  # chercheur
+            data['redirect_url'] = '/DashboardColc'
+        return data
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Ajout de données personnalisées dans le payload JWT
+        token['email'] = user.email
+        token['role'] = user.role
+        token['nom'] = user.nom
+        token['prenom'] = user.prenom
+        return token
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'nom', 'prenom', 'sexe', 'date_de_naissance', 'avatar', 'role']
+
 
 #user internaute
 class UserPublicSerializer(serializers.ModelSerializer):
@@ -10,10 +50,10 @@ class UserPublicSerializer(serializers.ModelSerializer):
         fields = ['nom', 'prenom', 'age','avatar','sexe']
 
 # Serializer pour l'utilisateur authentifié
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = '__all__'
+# class UserSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = User
+#         fields = '__all__'
 
 # Serializer pour l’annonce du propriétaire
 class AnnonceProprietaireSerializer(serializers.ModelSerializer):

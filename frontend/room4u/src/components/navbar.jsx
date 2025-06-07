@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/navbar.css';
+
 import logo from '../assets/logo.png';
 
 const Navbar = ({ onSignupClick, onLoginClick }) => {

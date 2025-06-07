@@ -41,18 +41,12 @@ INSTALLED_APPS = [
     'corsheaders',
     'accounts',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
 ]
-# 'rest_framework_swagger',
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ]
-}
-#django filtre 
-REST_FRAMEWORK = {
-    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
-}
 
+
+
+# Middleware
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -62,6 +56,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+#lien de react 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",  # React 
 ]
 
 ROOT_URLCONF = 'room4u_api.urls'
@@ -97,8 +95,20 @@ DATABASES = {
         'PORT': '5432', 
     }
 }
+#auth
+AUTH_USER_MODEL = 'accounts.User'
 
-
+# REST Framework
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ]
+}
+SIMPLE_JWT = {
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'BLACKLIST_AFTER_ROTATION': True,
+    'ROTATE_REFRESH_TOKENS': True,
+}
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
@@ -139,7 +149,3 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-# CORS settings
-CORS_ALLOW_ALL_ORIGINS = True
-#auth
-AUTH_USER_MODEL = 'accounts.User'

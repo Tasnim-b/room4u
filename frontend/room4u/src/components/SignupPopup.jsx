@@ -23,7 +23,7 @@ const SignupPopup = ({ onClose }) => {
           }}
         >
             
-            <span className="text">🏠 Je propose un logement</span>
+            <span className="text">🏠 Je propose une chambre </span>
           </button>
           
           <button 
@@ -34,7 +34,7 @@ const SignupPopup = ({ onClose }) => {
           }}
           >
             
-            <span className="text">🔍 Je cherche un logement</span>
+            <span className="text">🔍 Je cherche une chambre </span>
           </button>
         </div>
       </div>

@@ -7,10 +7,38 @@ const Login = ({ onClose ,onSignupClick}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Ajoutez ici la logique de connexion////////////////////////////////////////////////
-    console.log({ email, password });
+
+    try {
+      const response = await fetch("http://localhost:8000/login/", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert("Connexion réussie !");
+        
+        // 🔐 Stocker les tokens dans le localStorage
+        localStorage.setItem('access_token', data.access);
+        localStorage.setItem('refresh_token', data.refresh);
+        if (data.redirect_url) {
+          window.location.href = data.redirect_url;
+        } else {
+          window.location.href = '/'; 
+        }
+      } else {
+        alert("Erreur : " + data.detail || "Erreur inconnue");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erreur de connexion");
+    }
   };
 
   return (

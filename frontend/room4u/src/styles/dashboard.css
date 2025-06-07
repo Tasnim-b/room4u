@@ -1,0 +1,57 @@
+.dashboard-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+ 
+}
+
+.dashboard-content {
+  flex: 1;
+  display: flex;
+  margin-top: 70px; /* Ajustez selon la hauteur de votre navbar */
+  margin-left: 50px;
+}
+
+.main-content {
+  flex: 1;
+  padding: 2rem;
+  margin-left: 300px; /* Largeur de la sidebar */
+  overflow-y: auto;
+  min-height: calc(100vh - 70px);
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .main-content {
+    margin-left: 0;
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-content {
+    flex-direction: column;
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 0.5rem;
+  }
+  
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}

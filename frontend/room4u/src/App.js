@@ -6,20 +6,24 @@ import PopupManager from './components/PopupManager';
 import AppRoutes from './routes/AppRoutes';
 function App() {
   
-    const [showSignupPopup, setShowSignupPopup] = useState(false);
+    // const [showSignupPopup, setShowSignupPopup] = useState(false);
+    const [showRegisterPopup, setShowRegisterPopup] = useState(false);   
     const [showLoginPopup, setShowLogin] = useState(false); 
 
   return (
     <Router>
-      <Navbar onSignupClick={() => setShowSignupPopup(true)} 
-              onLoginClick={() => setShowLogin(true)}
-      /> 
+      <Navbar 
+        onSignupClick={() => setShowRegisterPopup(true)} 
+        onLoginClick={() => setShowLogin(true)} 
+      />
 
-    <PopupManager
+      <PopupManager
         showLoginPopup={showLoginPopup}
         setShowLogin={setShowLogin}
-        showSignupPopup={showSignupPopup}
-        setShowSignupPopup={setShowSignupPopup}
+        // showSignupPopup={showSignupPopup}
+        // setShowSignupPopup={setShowSignupPopup}
+        showRegisterPopup={showRegisterPopup}
+        setShowRegisterPopup={setShowRegisterPopup}
       />
 
       <AppRoutes/>

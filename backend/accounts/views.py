@@ -1,19 +1,93 @@
 from django.shortcuts import render
 from rest_framework import viewsets
-# from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-# from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-# from rest_framework import generics
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.permissions import IsAuthenticated
-from .models import AnnonceColocProposeur,AnnonceColcChercheur,AnnonceProprietaire,Message
-from .serializers import AnnonceUnifiedSerializer, AnnonceColcChercheurSerializer,AnnonceColocProposeurSerializer, AnnonceProprietaireSerializer,MessageSerializer
-from django_filters.rest_framework import DjangoFilterBackend
+from .models import AnnonceColocProposeur,AnnonceColcChercheur,AnnonceProprietaire,Message,User
+from .serializers import AnnonceUnifiedSerializer, AnnonceColcChercheurSerializer,AnnonceColocProposeurSerializer, AnnonceProprietaireSerializer,MessageSerializer,UserSerializer,RegisterSerializer
 from .filters import AnnonceProprietaireFilter, AnnonceColcChercheurFilter,AnnonceColocProposeurFilter
+from django.contrib.auth.hashers import make_password
+from rest_framework.decorators import api_view, parser_classes
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework import status
+from django.contrib.auth import authenticate
+from rest_framework.decorators import permission_classes
+from rest_framework import permissions
+from .serializers import CustomTokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 # Create your views here.
+#gestion de user 
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
 
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception as e:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Récupérer l'utilisateur connecté
+        user = serializer.user
+
+        # Construire la réponse personnalisée
+        data = {
+            'access': serializer.validated_data['access'],
+            'refresh': serializer.validated_data['refresh'],
+            'email': user.email,
+            'role': user.role,
+            'nom': user.nom,
+            'prenom': user.prenom,
+            # Ajouter l'URL de redirection selon le rôle
+            'redirect_url': '/Dashboard' if user.role == 'proprietaire' else '/DashboardColoc'
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
+
+class UserDetailView(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+class RegisterView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = RegisterSerializer
+    permission_classes = [permissions.AllowAny]
+    def post(self, request, *args, **kwargs):
+        print("Données reçues :", request.data)
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            headers = self.get_success_headers(serializer.data)
+            
+            # Créer une réponse personnalisée avec les données de l'utilisateur
+            response_data = serializer.data
+            
+            return Response(
+                response_data,
+                status=status.HTTP_201_CREATED,
+                headers=headers
+            )
+        else:
+            print("Erreurs de validation :", serializer.errors)  # Affiche les erreurs dans la console
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+class LogoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()  # Blacklister le token refresh
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 #gestion des annonces ####################################################################
 #création des annonces par type 
@@ -23,7 +97,6 @@ class AnnonceProprietaireViewSet(viewsets.ModelViewSet):
     queryset = AnnonceProprietaire.objects.all()
     serializer_class = AnnonceProprietaireSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
-    filter_backends = [DjangoFilterBackend]
     filterset_class = AnnonceProprietaireFilter
 
 
@@ -37,7 +110,6 @@ class AnnonceColcChercheurViewSet(viewsets.ModelViewSet):
     queryset = AnnonceColcChercheur.objects.all()
     serializer_class = AnnonceColcChercheurSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
-    filter_backends = [DjangoFilterBackend]
     filterset_class = AnnonceColcChercheurFilter
 
     def perform_create(self, serializer):
@@ -48,7 +120,6 @@ class AnnonceColocProposeurViewSet(viewsets.ModelViewSet):
     queryset = AnnonceColocProposeur.objects.all()
     serializer_class = AnnonceColocProposeurSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]#Les annonces ne peuvent être créées que par des utilisateurs connectés 
-    filter_backends = [DjangoFilterBackend]
     filterset_class = AnnonceColocProposeurFilter
 
 

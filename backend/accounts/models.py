@@ -113,14 +113,19 @@ class typeAnnonce(models.TextChoices):
 
 
 class User(AbstractUser):
+      # Remplacer le username par l'email
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
     nom=models.CharField(max_length=15)
     prenom=models.CharField(max_length=15)
-    email=models.EmailField()
+    email=models.EmailField(unique=True)
     sexe=models.CharField(max_length=5, choices=Sexe.choices)
     date_de_naissance=models.DateField()
     avatar=models.ImageField(null=False,blank=False,upload_to='photos_chercheurs/')
     role= models.CharField(max_length=20, choices=role.choices)
-    
+    username = None
+
+
 #getion des annonces 
 class Annonce(models.Model):
     gouvernorat=models.CharField(max_length=20)
