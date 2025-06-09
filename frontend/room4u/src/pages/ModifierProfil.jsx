@@ -7,36 +7,40 @@ const ModifierProfil = () => {
   const [formData, setFormData] = useState({
     nom: '',
     prenom: '',
-    email: '',
-    sexe: 'H',
+    sexe: '',
     date_de_naissance: '',
+    email: '',
+    role: '',
     avatar: null,
-    role: 'chercheur',
-    password: ''
+    password: '',
   });
-
   const [preview, setPreview] = useState('https://via.placeholder.com/150');
   const navigate = useNavigate();
 
-  // Simuler le chargement des données utilisateur existantes
-  useEffect(() => {
-    // Remplacer par un appel API réel
-    const fetchUserData = async () => {
-      // Exemple de données
-      const userData = {
-        nom: 'Dupont',
-        prenom: 'Jean',
-        email: 'jean.dupont@example.com',
-        sexe: 'H',
-        date_de_naissance: '1990-01-01',
-        avatar: 'url_de_l_avatar',
-        role: 'chercheur'
-      };
-      setFormData(userData);
-      setPreview(userData.avatar || 'https://via.placeholder.com/150');
-    };
-    fetchUserData();
-  }, []);
+useEffect(() => {
+  const fetchUserData = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/me/', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+      if (!response.ok) throw new Error('Erreur utilisateur non trouvé');
+      const userData = await response.json();
+      setFormData({
+        ...userData,
+        avatar: null, // Pour permettre le changement via file input
+        password: '',
+      });
+      setPreview(`${import.meta.env.VITE_BACKEND_URL}/photos_chercheurs/${userData.avatar?.split('/').pop()}`);
+    } catch (error) {
+      console.error('Erreur de récupération des données utilisateur', error);
+    }
+  };
+
+  fetchUserData();
+}, []);
+
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -52,13 +56,20 @@ const ModifierProfil = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     // Créer FormData pour gérer le fichier image
-    const formDataToSend = new FormData();
-    for (const key in formData) {
-      formDataToSend.append(key, formData[key]);
-    }
+      const formDataToSend = new FormData();
+
+      for (const key in formData) {
+        if (key === 'avatar') {
+          if (formData.avatar instanceof File) {
+            formDataToSend.append('avatar', formData.avatar);
+          }
+        } else {
+          formDataToSend.append(key, formData[key]);
+        }
+      }
 
     try {
-      const response = await fetch('URL_DE_VOTRE_API', {
+      const response = await fetch('http://localhost:8000/update/', {
         method: 'PUT',
         headers: {
           Authorization: `Bearer ${localStorage.getItem('access_token')}`,
@@ -67,7 +78,7 @@ const ModifierProfil = () => {
       });
 
       if (response.ok) {
-        navigate('/profil');
+        navigate('/ModifierProfil');
       } else {
         console.error('Erreur lors de la mise à jour');
       }

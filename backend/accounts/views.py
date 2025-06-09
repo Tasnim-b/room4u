@@ -18,7 +18,7 @@ from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework.decorators import permission_classes
 from rest_framework import permissions
-from .serializers import CustomTokenObtainPairSerializer
+from .serializers import CustomTokenObtainPairSerializer,UserSerializerupdate,AnnonceProprietaireSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 # Create your views here.
 #gestion de user 
@@ -34,6 +34,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
         # Récupérer l'utilisateur connecté
         user = serializer.user
+        
 
         # Construire la réponse personnalisée
         data = {
@@ -45,6 +46,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             'prenom': user.prenom,
             # Ajouter l'URL de redirection selon le rôle
             'redirect_url': '/Dashboard' if user.role == 'proprietaire' else '/DashboardColoc'
+            
         }
 
         return Response(data, status=status.HTTP_200_OK)
@@ -88,22 +90,47 @@ class LogoutView(APIView):
             return Response(status=status.HTTP_205_RESET_CONTENT)
         except Exception as e:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+#profile de l'utilisateur connecté
+class CurrentUserView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)
+class UserUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def put(self, request):
+        user = request.user
+        serializer = UserSerializerupdate(user, data=request.data, partial=True)  # `partial=True` pour accepter les champs partiels
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
 #gestion des annonces ####################################################################
 #création des annonces par type 
 
 # ViewSet pour les annonces des propriétaires
-class AnnonceProprietaireViewSet(viewsets.ModelViewSet):
+class AnnonceProprietaireCreateView(generics.CreateAPIView):
     queryset = AnnonceProprietaire.objects.all()
     serializer_class = AnnonceProprietaireSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
-    filterset_class = AnnonceProprietaireFilter
-
-
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
 
     def perform_create(self, serializer):
-        """Associe automatiquement l'utilisateur connecté à l'annonce."""
+        # Associer automatiquement l'utilisateur connecté
         serializer.save(user=self.request.user)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        else:
+            print("Erreurs de validation :", serializer.errors)  # Affiche les erreurs dans la console
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # ViewSet pour les annonces des colocataires chercheurs
 class AnnonceColcChercheurViewSet(viewsets.ModelViewSet):
@@ -153,3 +180,10 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(sender=self.request.user)
+
+class MesAnnoncesProprietaireListView(generics.ListAPIView):
+    serializer_class = AnnonceProprietaireSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return AnnonceProprietaire.objects.filter(user=self.request.user)

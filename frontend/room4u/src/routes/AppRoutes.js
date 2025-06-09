@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route ,Navigate} from 'react-router-dom';
 import Login from '../pages/Login';
 import FormulaireProprietaire from '../pages/FormulaireProprietaire';
 import FormulaireColocataire from '../pages/FormulaireColocataire';
@@ -15,11 +15,16 @@ import Favoris from '../pages/Favoris';
 import Notification from '../pages/Notification';
 import ModifierProfil from '../pages/ModifierProfil';
 import SignupPopup from '../components/SignupPopup';
+import AnnoncePro from '../pages/AnnoncePro';
+import Home from '../pages/Home';
+import MesAnnonces from '../pages/MesAnnonces';
+
 
 
 const AppRoutes = () => {
   return (
     <Routes>
+      <Route path="/" element={<Navigate to="/Home" />} />
       <Route path="/connexion" element={<Login />} />
       <Route path="/FormulaireProprietaire" element={<FormulaireProprietaire />} />
       <Route path="/FormulaireColocataire" element={<FormulaireColocataire />} />
@@ -35,6 +40,11 @@ const AppRoutes = () => {
       <Route path="/Notification" element={<Notification/>} />
       <Route path="/ModifierProfil" element={<ModifierProfil/>} />
       <Route path="/SignupPopup" element={<SignupPopup/>} />
+      <Route path="/AnnoncePro" element={<AnnoncePro/>} />
+      <Route path="/Home" element={<Home/>} />
+      <Route path="/MesAnnonces" element={<MesAnnonces/>} />
+
+
       
       
 

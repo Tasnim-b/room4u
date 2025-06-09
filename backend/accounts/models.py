@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
+from django.utils import timezone
 
 # Create your models here.
 
@@ -146,9 +147,10 @@ class AnnonceProprietaire(Annonce):
     nombre_pieces = models.PositiveIntegerField()
     superficie = models.PositiveIntegerField(help_text="en m²")
     photo_de_maison = models.ImageField(upload_to='photos_logements/')
+    additional_photos = models.JSONField(default=list, blank=True)
     commodites = models.CharField(max_length=50,choices=Commodite.choices)
     regles = models.CharField(max_length=50,choices=Regles.choices)
-    date_de_disponibilite = models.DateField()
+    date_de_disponibilite = models.DateField(default=timezone.now)
     loyer = models.DecimalField(max_digits=10, decimal_places=2)
     caution = models.DecimalField(max_digits=10, decimal_places=2)
     meuble = models.CharField(max_length=5,choices=acceptation.choices)
@@ -165,7 +167,7 @@ class AnnonceColcChercheur(Annonce):
     budget_max=models.DecimalField(max_digits=10, decimal_places=2)
     occupation=models.CharField(max_length=15,choices=PositionSociale.choices)
     age=models.PositiveIntegerField()
-    date_habite=models.DateField()
+    date_habite=models.DateField(default=timezone.now)
     preferences=models.CharField( max_length=20,choices=preferences.choices)
 
 
@@ -173,6 +175,7 @@ class AnnonceColcChercheur(Annonce):
 class AnnonceColocProposeur(Annonce):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='annonces_colocateur_proposeur')
     photo_de_chambre=models.ImageField(upload_to='photos_logements/')
+    additional_photos = models.JSONField(default=list, blank=True)
     loyer=models.DecimalField(max_digits=10, decimal_places=2)
     caution=models.DecimalField(max_digits=10, decimal_places=2)
     date_de_disponibilite=models.DateField()

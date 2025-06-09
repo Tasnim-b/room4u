@@ -4,7 +4,6 @@ import '../styles/navbardash.css';
 import logo from '../assets/logo.png';
 import { Link ,useNavigate} from 'react-router-dom';
 
-
 const NavbarDash = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -25,7 +24,7 @@ const NavbarDash = () => {
     if (response.status === 205) {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
-      navigate('/login');
+      navigate('/');
     } else {
       alert('Erreur lors de la déconnexion.');
     }
@@ -49,10 +48,10 @@ const NavbarDash = () => {
 
       <div className="nav-right">
         <div className="nav-icons">
-          <button className="icon-btn add-btn">
+          <Link to="/FormulaireProprietaire" className="icon-btn add-btn">
             <FaPlus />
-          </button>
-          <Link to="/messagerie" className="nav-icon-link">
+          </Link>
+          <Link to="/Messagerie" className="nav-icon-link">
             <FaRegCommentDots className="nav-icon" />
           </Link>
           <Link to="/Favoris">
@@ -73,7 +72,7 @@ const NavbarDash = () => {
           {isProfileOpen && (
             <div className="profile-dropdown">
               <Link to="/ModifierProfil" className="dropdown-item">Modifier profil</Link>
-              <Link to="/" className="dropdown-item">Mes annonces</Link>
+              <Link to="/MesAnnonces" className="dropdown-item">Mes annonces</Link>
               <div className="dropdown-item logout" onClick={handleLogout}>Se déconnecter</div>
             </div>
           )}

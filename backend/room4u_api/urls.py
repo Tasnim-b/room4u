@@ -16,8 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',include('accounts.urls'))
 ]
+urlpatterns += static(getattr(settings, 'PHOTOS_LOGEMENTS_URL', '/photos_logements/'), document_root=getattr(settings, 'PHOTOS_LOGEMENTS_ROOT', 'photos_logements'))

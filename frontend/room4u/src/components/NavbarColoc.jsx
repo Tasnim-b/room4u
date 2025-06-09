@@ -8,7 +8,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 
 
-const NavbarDash = (onClose) => {
+const NavbarDash = ({onClose}) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
   const handleLogout = async () => {
@@ -27,7 +27,7 @@ const NavbarDash = (onClose) => {
     if (response.status === 205) {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
-      navigate('/login');
+      navigate('/');
     } else {
       alert('Erreur lors de la déconnexion.');
     }
@@ -81,7 +81,7 @@ const NavbarDash = (onClose) => {
           {isProfileOpen && (
             <div className="profile-dropdown">
               <Link to="/ModifierProfil" className="dropdown-item">Modifier profil</Link>
-              <Link to="/" className="dropdown-item">Mes annonces</Link>
+              <Link to="/MesAnnonces" className="dropdown-item">Mes annonces</Link>
               <div className="dropdown-item logout" onClick={handleLogout}>Se déconnecter</div>
             </div>
           )}

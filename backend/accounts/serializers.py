@@ -3,7 +3,10 @@ from .models import User, Message,Notification, AnnonceColcChercheur,AnnonceProp
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.hashers import make_password
+from django.core.files.base import ContentFile
+from django.utils import timezone
 
+#authetification 
 User = get_user_model()
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, min_length=8)
@@ -42,7 +45,22 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'email', 'nom', 'prenom', 'sexe', 'date_de_naissance', 'avatar', 'role']
 
+class UserSerializerupdate(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=False)
 
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'nom', 'prenom', 'sexe', 'date_de_naissance', 'avatar', 'role', 'password']
+
+    def update(self, instance, validated_data):
+        # Traitement du mot de passe uniquement s'il est fourni
+        password = validated_data.pop('password', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if password:
+            instance.set_password(password)
+        instance.save()
+        return instance
 #user internaute
 class UserPublicSerializer(serializers.ModelSerializer):
     class Meta:
@@ -57,15 +75,14 @@ class UserPublicSerializer(serializers.ModelSerializer):
 
 # Serializer pour l’annonce du propriétaire
 class AnnonceProprietaireSerializer(serializers.ModelSerializer):
-    user = serializers.SerializerMethodField()
     class Meta:
         model = AnnonceProprietaire
         fields = '__all__'
-    def get_user(self, obj):
-        request = self.context.get('request')
-        if request and request.user and request.user.is_authenticated:
-            return UserSerializer(obj.user).data
-        return UserPublicSerializer(obj.user).data
+        read_only_fields = ('user',)
+
+    def create(self, validated_data):
+        # L'utilisateur sera injecté dans la view avec serializer.save(user=...)
+        return super().create(validated_data)
 
 # Serializer pour l’annonce chercheur
 class AnnonceColcChercheurSerializer(serializers.ModelSerializer):
