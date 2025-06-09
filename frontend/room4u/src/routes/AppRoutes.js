@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route ,Navigate} from 'react-router-dom';
+import { Routes, Route ,Navigate, useLocation} from 'react-router-dom';
 import Login from '../pages/Login';
 import FormulaireProprietaire from '../pages/FormulaireProprietaire';
 import FormulaireColocataire from '../pages/FormulaireColocataire';
@@ -18,10 +18,15 @@ import SignupPopup from '../components/SignupPopup';
 import AnnoncePro from '../pages/AnnoncePro';
 import Home from '../pages/Home';
 import MesAnnonces from '../pages/MesAnnonces';
+import FormulaireColocProposeur from '../pages/FormulaireColocProposeur';
 
 
 
 const AppRoutes = () => {
+  const location = useLocation();
+  // Récupère l'userId du destinataire depuis l'URL (plus fiable que state)
+  const searchParams = new URLSearchParams(location.search);
+  const destinataireId = searchParams.get('userId') || '';
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/Home" />} />
@@ -32,7 +37,7 @@ const AppRoutes = () => {
       {/* <Route path="/NavbarDash" element={<NavbarDash/>} />
       <Route path="/Sidebar" element={<Sidebar/>} /> */}
       <Route path="/Dashboard" element={<Dashboard/>} />
-      <Route path="/Messagerie" element={<Messagerie/>} />
+      <Route path="/Messagerie" element={<Messagerie key={destinataireId} />} />
       <Route path="/FormulaireTestCompatibilite" element={<FormulaireTestCompatibilite/>} />
       <Route path="/Register" element={<Register/>} />
       <Route path="/DashboardColoc" element={<DashboardColoc/>} />
@@ -43,6 +48,7 @@ const AppRoutes = () => {
       <Route path="/AnnoncePro" element={<AnnoncePro/>} />
       <Route path="/Home" element={<Home/>} />
       <Route path="/MesAnnonces" element={<MesAnnonces/>} />
+      <Route path="/FormulaireColocProposeur" element={<FormulaireColocProposeur/>} />
 
 
       

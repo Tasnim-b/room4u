@@ -63,10 +63,11 @@
 }
 
 .annonces-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2.5rem 2rem; /* Plus d'espace entre les cards (vertical et horizontal) */
-  justify-content: flex-start;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.2rem;
+  justify-items: center;
+  margin-top: 2rem;
 }
 
 .annonce-card {
@@ -78,8 +79,15 @@
   margin-bottom: 0;
   margin-right: 0;
   flex: 1 1 320px;
-  min-width: 320px;
+  min-width: 300px;
   max-width: 400px;
+  width: 100%;
+  font-size: 0.92rem;
+  height: 710px;
+  /* Cartes plus petites */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .annonce-card:hover {
@@ -113,7 +121,8 @@
 }
 
 .card-image {
-  height: 200px;
+  height: 90px;
+  /* Image plus petite */
   overflow: hidden;
 }
 
@@ -229,6 +238,22 @@
   background: #fdecea;
   border-radius: 10px;
   margin: 2rem;
+}
+
+body, html, #root {
+  overflow-x: hidden;
+}
+
+@media (max-width: 1000px) {
+  .annonces-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .annonces-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Suppression du style spécifique pour .contact-btn */

@@ -8,8 +8,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.permissions import IsAuthenticated
-from .models import AnnonceColocProposeur,AnnonceColcChercheur,AnnonceProprietaire,Message,User
-from .serializers import AnnonceUnifiedSerializer, AnnonceColcChercheurSerializer,AnnonceColocProposeurSerializer, AnnonceProprietaireSerializer,MessageSerializer,UserSerializer,RegisterSerializer
+from .models import AnnonceColocProposeur,AnnonceColcChercheur,AnnonceProprietaire,Message,User,Conversation
+from .serializers import AnnonceUnifiedSerializer, AnnonceColcChercheurSerializer,AnnonceColocProposeurSerializer, AnnonceProprietaireSerializer,MessageSerializer,UserSerializer,RegisterSerializer,ConversationSerializer
 from .filters import AnnonceProprietaireFilter, AnnonceColcChercheurFilter,AnnonceColocProposeurFilter
 from django.contrib.auth.hashers import make_password
 from rest_framework.decorators import api_view, parser_classes
@@ -20,6 +20,7 @@ from rest_framework.decorators import permission_classes
 from rest_framework import permissions
 from .serializers import CustomTokenObtainPairSerializer,UserSerializerupdate,AnnonceProprietaireSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.exceptions import PermissionDenied
 # Create your views here.
 #gestion de user 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -136,7 +137,7 @@ class AnnonceProprietaireCreateView(generics.CreateAPIView):
 class AnnonceColcChercheurViewSet(viewsets.ModelViewSet):
     queryset = AnnonceColcChercheur.objects.all()
     serializer_class = AnnonceColcChercheurSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticated]
     filterset_class = AnnonceColcChercheurFilter
 
     def perform_create(self, serializer):
@@ -146,13 +147,16 @@ class AnnonceColcChercheurViewSet(viewsets.ModelViewSet):
 class AnnonceColocProposeurViewSet(viewsets.ModelViewSet):
     queryset = AnnonceColocProposeur.objects.all()
     serializer_class = AnnonceColocProposeurSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]#Les annonces ne peuvent être créées que par des utilisateurs connectés 
-    filterset_class = AnnonceColocProposeurFilter
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
 
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
+    def create(self, request, *args, **kwargs):
+        if 'photos' in request.FILES:
+            request.data._mutable = True
+            request.data['photo_de_chambre'] = request.FILES['photos'][0]  
+            request.data._mutable = False
+        
+        return super().create(request, *args, **kwargs)
 #affichages des annonces 
 class AnnonceUnifiedListView(APIView):
     permission_classes = [AllowAny]
@@ -187,3 +191,38 @@ class MesAnnoncesProprietaireListView(generics.ListAPIView):
 
     def get_queryset(self):
         return AnnonceProprietaire.objects.filter(user=self.request.user)
+        
+class ConversationListCreateView(generics.ListCreateAPIView):
+    serializer_class = ConversationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Conversation.objects.filter(participants=self.request.user)
+
+    def post(self, request, *args, **kwargs):
+        user_id = request.data.get('user_id')
+        if not user_id:
+            return Response({'error': 'user_id is required'}, status=400)
+        other_user = User.objects.get(id=user_id)
+        conv = Conversation.objects.filter(participants=self.request.user).filter(participants=other_user).first()
+        if conv:
+            serializer = self.get_serializer(conv)
+            return Response(serializer.data)
+        conv = Conversation.objects.create()
+        conv.participants.add(self.request.user, other_user)
+        serializer = self.get_serializer(conv)
+        return Response(serializer.data, status=201)
+
+class MessageListCreateView(generics.ListCreateAPIView):
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        conversation_id = self.kwargs['conversation_id']
+        return Message.objects.filter(conversation_id=conversation_id).order_by('timestamp')
+
+    def perform_create(self, serializer):
+        conversation = Conversation.objects.get(id=self.kwargs['conversation_id'])
+        if self.request.user not in conversation.participants.all():
+            raise PermissionDenied("Vous n'êtes pas dans cette conversation.")
+        serializer.save(sender=self.request.user, conversation=conversation)

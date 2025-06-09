@@ -70,7 +70,10 @@ const MesAnnonces = () => {
   };
 
   const handleContact = (annonce) => {
-    alert(`Contactez ${annonce.user?.nom || ''} au ${annonce.user?.phone || ''}`);
+    // Redirige vers la messagerie en passant l'ID et le nom du destinataire dans l'URL (query params)
+    if (annonce.user?.id) {
+      navigate(`/Messagerie?userId=${annonce.user.id}&userName=${encodeURIComponent(annonce.user.nom || '')}`);
+    }
   };
 
   // Handler pour la modification d'annonce

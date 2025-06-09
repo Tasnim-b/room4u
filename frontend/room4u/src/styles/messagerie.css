@@ -89,11 +89,14 @@
 
 /* Chat List Styles */
 .chat-list {
-  width: 25%;
-  background-color: #ffffff;
-  border-right: 1px solid var(--border-color);
+  width: 32%; /* plus large pour meilleure visibilité */
+  min-width: 270px;
+  max-width: 400px;
+  background-color: #fff;
+  border-right: 1.5px solid var(--border-color);
   display: flex;
   flex-direction: column;
+  box-shadow: 2px 0 8px #e9edef33;
 }
 
 .chat-list-header {
@@ -137,18 +140,20 @@
 .chat-item {
   display: flex;
   align-items: center;
-  padding: 0.1rem;
-  gap: 0.1rem;
+  padding: 0.7rem 1rem 0.7rem 1.2rem;
+  gap: 0.7rem;
+  border-bottom: 1px solid #f0f2f5;
   cursor: pointer;
-  transition: background-color 0.2s;
+  background: #fff;
+  transition: background 0.2s;
 }
 
 .chat-item:hover {
-  background-color: var(--background-light);
+  background: #f5f6f6;
 }
 
 .chat-item.active {
-  background-color: #f5f6f6;
+  background: #e6f7f1;
 }
 
 .chat-header {

@@ -1,10 +1,12 @@
+from datetime import date
 from rest_framework import serializers
-from .models import User, Message,Notification, AnnonceColcChercheur,AnnonceProprietaire,AnnonceColocProposeur,Favoris,Matching,FomulaireTestCompatibilite
+from .models import PositionSociale, User, Message,Notification, AnnonceColcChercheur,AnnonceProprietaire,AnnonceColocProposeur,Favoris,Matching,FomulaireTestCompatibilite, typeAnnonce, preferences
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.hashers import make_password
 from django.core.files.base import ContentFile
 from django.utils import timezone
+from .models import Conversation, Message
 
 #authetification 
 User = get_user_model()
@@ -86,28 +88,51 @@ class AnnonceProprietaireSerializer(serializers.ModelSerializer):
 
 # Serializer pour l’annonce chercheur
 class AnnonceColcChercheurSerializer(serializers.ModelSerializer):
-    user = serializers.SerializerMethodField()
+    user = UserSerializer(read_only=True)
+    occupation = serializers.ChoiceField(choices=PositionSociale.choices)
+    preferences = serializers.ChoiceField(choices=preferences.choices)
+    type_annonce = serializers.ChoiceField(choices=typeAnnonce.choices, read_only=True)
+    preferences = serializers.ListField(
+    child=serializers.ChoiceField(choices=preferences.choices),
+    required=False
+)
     class Meta:
         model = AnnonceColcChercheur
         fields = '__all__'
+        read_only_fields = ['user', 'date_pub_annonce', 'type_annonce', 'age']
 
-    def get_user(self, obj):
-        request = self.context.get('request')
-        if request and request.user and request.user.is_authenticated:
-            return UserSerializer(obj.user).data
-        return UserPublicSerializer(obj.user).data
+    def create(self, validated_data):
+        user = self.context['request'].user
+        today = date.today()
+        dob = user.date_de_naissance
+        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+
+        validated_data['user'] = user
+        validated_data['date_pub_annonce'] = timezone.now().date()
+        validated_data['type_annonce'] = typeAnnonce.Annonce_chercheur_chambre
+        validated_data['age'] = age
+
+        return super().create(validated_data)
     
 # Serializer pour l’annonce proposeur
 class AnnonceColocProposeurSerializer(serializers.ModelSerializer):
-    user = serializers.SerializerMethodField()
+    photo_url = serializers.SerializerMethodField()
+    user = UserSerializer(read_only=True)
     class Meta:
         model = AnnonceColocProposeur
-        fields = '__all__'
-    def get_user(self, obj):
+        fields = '__all__'  
+        read_only_fields = ['user', 'date_pub_annonce', 'type_annonce']
+
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+        validated_data['date_pub_annonce'] = timezone.now().date()
+        validated_data['type_annonce'] = typeAnnonce.Annonce_proposeur_chambre
+        return super().create(validated_data)
+    def get_photo_url(self, obj):
         request = self.context.get('request')
-        if request and request.user and request.user.is_authenticated:
-            return UserSerializer(obj.user).data
-        return UserPublicSerializer(obj.user).data
+        if obj.photo_de_chambre and request:
+            return request.build_absolute_uri(obj.photo_de_chambre.url)
+        return None
 
 # Serializer pour le formulaire de compatibilité
 class FomulaireTestCompatibiliteSerializer(serializers.ModelSerializer):
@@ -123,9 +148,30 @@ class MatchingSerializer(serializers.ModelSerializer):
 
 # Serializer pour les messages
 class MessageSerializer(serializers.ModelSerializer):
+    sender_name = serializers.CharField(source='sender.get_full_name', read_only=True)
+    conversation = serializers.PrimaryKeyRelatedField(read_only=True)
+    sender = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = Message
-        fields = '__all__'
+        fields = ['id', 'conversation', 'sender', 'sender_name', 'text', 'timestamp', 'is_read']
+
+class ConversationSerializer(serializers.ModelSerializer):
+    last_message = serializers.SerializerMethodField()
+    participants_info = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Conversation
+        fields = ['id', 'participants', 'participants_info', 'created_at', 'last_message']
+
+    def get_last_message(self, obj):
+        last = obj.messages.order_by('-timestamp').first()
+        return MessageSerializer(last).data if last else None
+
+    def get_participants_info(self, obj):
+        return [
+            {"id": u.id, "nom": u.first_name, "prenom": u.last_name, "email": u.email}
+            for u in obj.participants.all()
+        ]
 
 # Serializer pour les notifications
 class NotificationSerializer(serializers.ModelSerializer):

@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.utils import timezone
-
+from django.contrib.postgres.fields import ArrayField
 # Create your models here.
 
 class role(models.TextChoices):
@@ -168,7 +168,11 @@ class AnnonceColcChercheur(Annonce):
     occupation=models.CharField(max_length=15,choices=PositionSociale.choices)
     age=models.PositiveIntegerField()
     date_habite=models.DateField(default=timezone.now)
-    preferences=models.CharField( max_length=20,choices=preferences.choices)
+    preferences = ArrayField(
+        models.CharField(max_length=50, choices=preferences.choices),
+        blank=True,
+        default=list
+    )
 
 
 
@@ -219,20 +223,17 @@ class Matching(models.Model):
 # MESSAGERIE
 # ----------------------
 
-class Message(models.Model):
-    expediteur = models.ForeignKey(User, on_delete=models.CASCADE, related_name='messages_envoyes')
-    destinataire = models.ForeignKey(User, on_delete=models.CASCADE, related_name='messages_recus')
-    contenu = models.TextField()
-    date_envoi = models.DateTimeField(auto_now_add=True)
-    lu = models.BooleanField(default=False)
-    def marquer_comme_lu(self):
-        self.lu = True
-        self.save()
-    
+class Conversation(models.Model):
+    participants = models.ManyToManyField(User, related_name='conversations')
+    created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"De {self.expediteur.nom} à {self.destinataire.nom} - {self.date_envoi.strftime('%d/%m/%Y %H:%M')}"
-    
+class Message(models.Model):
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    text = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
 class Notification(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     message = models.TextField()
