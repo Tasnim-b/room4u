@@ -8,19 +8,29 @@
 }
 
 .messaging-app {
-  top: 70px;
+  position: relative;
   display: flex;
-  height: calc(100vh - 70px);
+  flex-direction: row;
+  height: 100vh;
   background-color: var(--background-light);
   font-family: 'Segoe UI', sans-serif;
 }
 
 .chat-list,
 .chat-window {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+  margin-top: 70px;
+  height: calc(100vh - 70px);
 }
+
+/* Fixe la navbar en haut */
+.NavbarDash {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  z-index: 1000;
+}
+
 .chats {
   flex: 1;
   overflow-y: auto;
@@ -158,9 +168,39 @@
 
 .chat-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.3rem;
+  padding: 0.1rem;
+  background-color: var(--background-light);
+  border-bottom: 1px solid var(--border-color);
+  gap: 1rem;
+}
+
+/* Affichage du nom du destinataire plus visible dans l'en-tête */
+.chat-header h2 {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.5px;
+}
+
+/* Optionnel : avatar rond à gauche du nom */
+.chat-header .contact-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.chat-header .avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e9edef;
+  object-fit: cover;
+  border: 2px solid var(--primary-color);
 }
 
 .chat-preview {
@@ -193,7 +233,6 @@
   background-color: var(--background-light);
   border-bottom: 1px solid var(--border-color);
   gap: 1rem;
-  margin-top: 70px;
 }
 
 .back-button {

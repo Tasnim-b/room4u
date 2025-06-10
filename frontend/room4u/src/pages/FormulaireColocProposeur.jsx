@@ -4,11 +4,16 @@ import {
   FaCalendarAlt,
   FaCoins,  FaCamera, FaCheckCircle,  FaTimes
 } from 'react-icons/fa';
+import { useLocation } from 'react-router-dom';
 
 import '../styles/FormulaireProprietaire.css'; 
 import NavbarColoc from '../components/NavbarColoc'; 
 
 const FormulaireColocProposeur = () => {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const annonceId = searchParams.get('id');
+
   const [formData, setFormData] = useState({
     gouvernorat: '',
     delegation: '',
@@ -101,14 +106,12 @@ const FormulaireColocProposeur = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       const token = localStorage.getItem('access_token');
       if (!token) {
         alert("Utilisateur non authentifié.");
         return;
       }
-
       const form = new FormData();
       form.append("gouvernorat", formData.gouvernorat);
       form.append("delegation", formData.delegation);
@@ -117,35 +120,72 @@ const FormulaireColocProposeur = () => {
       form.append("loyer", formData.loyer);
       form.append("caution", formData.caution);
       form.append("date_de_disponibilite", formData.date_de_disponibilite);
-      
       // Append each photo
       formData.photos.forEach((photo, index) => {
-  form.append('photo_de_chambre', photo.file);
-});
-
-      const response = await fetch("http://localhost:8000/coloc-proposeur-annonces/", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        body: form
+        form.append('photo_de_chambre', photo.file);
       });
-
+      let response;
+      if (annonceId) {
+        // Edition : PUT
+        response = await fetch(`http://localhost:8000/coloc-proposeur-annonces/${annonceId}/`, {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          body: form
+        });
+      } else {
+        // Création : POST
+        response = await fetch("http://localhost:8000/coloc-proposeur-annonces/", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          body: form
+        });
+      }
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Backend error details:", errorData);
         throw new Error(`Erreur serveur: ${JSON.stringify(errorData)}`);
       }
-
       const result = await response.json();
-      alert("Annonce publiée avec succès !");
-      console.log(result);
-
+      alert(annonceId ? "Annonce modifiée avec succès !" : "Annonce publiée avec succès !");
+      // Redirection ou autre action ici
     } catch (error) {
       console.error("Erreur complète:", error);
       alert(`Échec de l'envoi: ${error.message}`);
     }
   };
+
+  // Pré-remplir le formulaire si édition (annonceId dans l'URL)
+  React.useEffect(() => {
+    if (annonceId) {
+      fetch(`http://localhost:8000/coloc-proposeur-annonces/${annonceId}/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      })
+        .then(res => res.json())
+        .then(annonce => {
+          setFormData({
+            gouvernorat: annonce.gouvernorat || '',
+            delegation: annonce.delegation || '',
+            phone: annonce.phone || '',
+            description: annonce.description || '',
+            typeLogement: annonce.typeLogement || '',
+            nbPieces: annonce.nbPieces || '',
+            superficie: annonce.superficie || '',
+            photos: [], // L'utilisateur doit re-uploader s'il veut changer
+            loyer: annonce.loyer || '',
+            caution: annonce.caution || '',
+            date_de_disponibilite: annonce.date_de_disponibilite || '',
+            commodites: annonce.commodites || {},
+            regles: annonce.regles || {}
+          });
+        });
+    }
+  }, [annonceId]);
 
   return (
    <div>

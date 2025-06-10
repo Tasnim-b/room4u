@@ -17,14 +17,17 @@ import {
   FaMoneyBillWave,
   FaUsers,
   FaRegClock,
+  FaHeart
 } from 'react-icons/fa';
 import '../styles/AnnoncePro.css';
 
 const AnnonceProprietaire = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
+  const [isFavori, setIsFavori] = useState(false);
 
   const annonce = {
+    id: 1,
     photos: [
       'https://www.depreux-construction.com/wp-content/uploads/2024/07/APS02-MOUILLESSE-LT_Page_1.jpg',
       'https://www.depreux-construction.com/wp-content/uploads/2024/07/APS02-MOUILLESSE-LT_Page_2.jpg',
@@ -75,6 +78,36 @@ const AnnonceProprietaire = () => {
     alert(`Contactez ${annonce.user.nom} au ${annonce.user.phone}`);
   };
 
+  const handleFavori = async () => {
+    const token = localStorage.getItem('access_token');
+    const url = 'http://localhost:8000/favoris/';
+    const body = {
+      object_id: annonce.id,
+      model_name: 'annonceproprietaire'
+    };
+    if (!isFavori) {
+      await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(body)
+      });
+      setIsFavori(true);
+    } else {
+      await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(body)
+      });
+      setIsFavori(false);
+    }
+  };
+
   return (
     <>
       <div className="annonce-card">
@@ -84,6 +117,9 @@ const AnnonceProprietaire = () => {
         >
           <button className="voir-maison-btn" onClick={togglePopup}>
             <FaHome className="icon-grey" /> Voir Maison
+          </button>
+          <button className="favori-btn" onClick={handleFavori} style={{position:'absolute',top:10,right:10,background:'none',border:'none',cursor:'pointer'}}>
+            <FaHeart color={isFavori ? 'red' : 'grey'} size={28} />
           </button>
         </div>
 

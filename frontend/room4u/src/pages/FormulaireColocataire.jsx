@@ -1,4 +1,4 @@
-import  { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FaUser,
   FaCalendarAlt,
@@ -11,8 +11,13 @@ import {
 } from "react-icons/fa";
 import "../styles/FormulaireChercheur.css";
 import NavbarColoc from '../components/NavbarColoc'; 
+import { useLocation } from 'react-router-dom';
 
 const FormulaireColocataire = ({ onClose }) => {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const annonceId = searchParams.get('id');
+
   const [formData, setFormData] = useState({
     gouvernorat: "",
     delegation: "",
@@ -66,18 +71,15 @@ const FormulaireColocataire = ({ onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
       const token = localStorage.getItem("access_token");
       if (!token) {
         alert("Utilisateur non authentifié.");
         return;
       }
-
       const selectedPreferences = Object.entries(formData.preferences)
         .filter(([_, isChecked]) => isChecked)
         .map(([key]) => key);
-
       const form = new FormData();
       form.append("gouvernorat", formData.gouvernorat);
       form.append("delegation", formData.delegation);
@@ -86,28 +88,35 @@ const FormulaireColocataire = ({ onClose }) => {
       form.append("budget_max", formData.budget_max);
       form.append("occupation", formData.occupation);
       form.append("date_habite", formData.date_habite);
-
-      // ✅ Append each preference individually
       selectedPreferences.forEach(pref => {
         form.append("preferences", pref);
       });
-
-      const response = await fetch("http://localhost:8000/coloc-chercheur-annonces/", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: form,
-      });
-
+      let response;
+      if (annonceId) {
+        // Edition : PUT
+        response = await fetch(`http://localhost:8000/coloc-chercheur-annonces/${annonceId}/`, {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: form,
+        });
+      } else {
+        // Création : POST
+        response = await fetch("http://localhost:8000/coloc-chercheur-annonces/", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: form,
+        });
+      }
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Backend error details:", errorData);
         throw new Error(`Erreur serveur: ${JSON.stringify(errorData)}`);
       }
-
-      alert("Annonce créée avec succès ! 🎉");
-
+      alert(annonceId ? "Annonce modifiée avec succès !" : "Annonce créée avec succès ! 🎉");
       setFormData({
         gouvernorat: "",
         delegation: "",
@@ -119,13 +128,36 @@ const FormulaireColocataire = ({ onClose }) => {
         date_habite: "",
         preferences: {},
       });
-
-      if (onClose) onClose();
     } catch (error) {
       console.error("Erreur complète:", error);
       alert(`Échec de l'envoi: ${error.message}`);
     }
   };
+
+  // Pré-remplir le formulaire si édition (annonceId dans l'URL)
+  useEffect(() => {
+    if (annonceId) {
+      fetch(`http://localhost:8000/coloc-chercheur-annonces/${annonceId}/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      })
+        .then(res => res.json())
+        .then(annonce => {
+          setFormData({
+            gouvernorat: annonce.gouvernorat || '',
+            delegation: annonce.delegation || '',
+            phone: annonce.phone || '',
+            description: annonce.description || '',
+            budget_max: annonce.budget_max || '',
+            occupation: annonce.occupation || '',
+            age: annonce.age || '',
+            date_habite: annonce.date_habite || '',
+            preferences: annonce.preferences || {},
+          });
+        });
+    }
+  }, [annonceId]);
 
   return (
     <div>

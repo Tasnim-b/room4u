@@ -78,7 +78,16 @@ const MesAnnonces = () => {
 
   // Handler pour la modification d'annonce
   const handleEdit = (annonce) => {
-    // Action désactivée : aucune action sur le bouton Modifier
+    // Redirige vers le bon formulaire selon le type d'annonce
+    if (annonce.type_annonce === 'Annonce Propriétaire') {
+      navigate(`/FormulaireProprietaire?id=${annonce.id}`);
+    } else if (annonce.type_annonce === 'Annonce Proposeur Chambre') {
+      navigate(`/FormulaireColocProposeur?id=${annonce.id}`);
+    } else if (annonce.type_annonce === 'Annonce Chercheur Chambre') {
+      navigate(`/FormulaireColocataire?id=${annonce.id}`);
+    } else {
+      alert('Type d\'annonce non reconnu pour la modification.');
+    }
   };
 
   // Handler pour la suppression d'annonce

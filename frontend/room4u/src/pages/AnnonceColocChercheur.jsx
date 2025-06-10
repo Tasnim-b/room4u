@@ -5,11 +5,13 @@ import {
   FaUserTie,
   FaRegClock,
   FaMoneyBillWave,
+  FaHeart
 } from "react-icons/fa";
 import "../styles/annonceColocChercheur.css";
 
 const AnnonceColocChercheur = () => {
   const [annonces, setAnnonces] = useState([]);
+  const [favoris, setFavoris] = useState({});
 
   useEffect(() => {
     const fetchAnnonces = async () => {
@@ -52,6 +54,36 @@ const AnnonceColocChercheur = () => {
     fetchAnnonces();
   }, []);
 
+  const handleFavori = async (annonce) => {
+    const token = localStorage.getItem('access_token');
+    const url = 'http://localhost:8000/favoris/';
+    const body = {
+      object_id: annonce.id,
+      model_name: 'annoncecolcchercheur'
+    };
+    if (!favoris[annonce.id]) {
+      await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(body)
+      });
+      setFavoris(prev => ({ ...prev, [annonce.id]: true }));
+    } else {
+      await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(body)
+      });
+      setFavoris(prev => ({ ...prev, [annonce.id]: false }));
+    }
+  };
+
   return (
 
     <div className="annonces-container">
@@ -66,6 +98,9 @@ const AnnonceColocChercheur = () => {
               <div className="image-text-bottom">
                 {annonce.user?.nom} {annonce.user?.prenom}, {annonce.age} ans
               </div>
+              <button className="favori-btn" onClick={() => handleFavori(annonce)} style={{position:'absolute',top:10,right:10,background:'none',border:'none',cursor:'pointer'}}>
+                <FaHeart color={favoris[annonce.id] ? 'red' : 'grey'} size={28} />
+              </button>
             </div>
           </div>
 

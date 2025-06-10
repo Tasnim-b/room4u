@@ -1,36 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { FaHeart, FaTimes, FaSearch, FaArrowLeft } from 'react-icons/fa';
+import { FaHeart, FaTimes, FaSearch } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import '../styles/Favoris.css';
 import NavbarDash from '../components/NavbarDash';
-
-// ✅ Données mockées placées ici (au début du fichier)
-const mockFavorites = [
-  {
-    id: 1,
-    housing: {
-      id: 101,
-      title: 'Appartement lumineux',
-      city: 'Paris',
-      country: 'France',
-      price: 750,
-      main_image: 'https://example.com/image1.jpg'
-    },
-    created_at: '2023-05-20T10:30:00Z'
-  },
-  {
-    id: 2,
-    housing: {
-      id: 102,
-      title: 'Studio moderne',
-      city: 'Lyon',
-      country: 'France',
-      price: 550,
-      main_image: 'https://example.com/image2.jpg'
-    },
-    created_at: '2023-05-18T14:20:00Z'
-  }
-];
+import AnnonceProprietaire from './AnnoncePro';
+import AnnonceColocProposeur from './AnnonceColocProposeur';
+import AnnonceColocChercheur from './AnnonceColocChercheur';
 
 const Favoris = () => {
   const [favorites, setFavorites] = useState([]);
@@ -42,19 +17,19 @@ const Favoris = () => {
   useEffect(() => {
     const fetchFavorites = async () => {
       try {
-        // Simulation d’appel API avec un délai
-        const timer = setTimeout(() => {
-          setFavorites(mockFavorites);
-          setLoading(false);
-        }, 1000);
-
-        return () => clearTimeout(timer);
+        const token = localStorage.getItem('access_token');
+        const res = await fetch('http://localhost:8000/favoris-user/', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Erreur lors du chargement des favoris');
+        const data = await res.json();
+        setFavorites(data);
+        setLoading(false);
       } catch (err) {
         setError(err.message);
         setLoading(false);
       }
     };
-
     fetchFavorites();
   }, []);
 
@@ -67,10 +42,12 @@ const Favoris = () => {
     }
   };
 
-  const filteredFavorites = favorites.filter(fav => 
-    fav.housing.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    fav.housing.city.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredFavorites = favorites.filter(fav => {
+    const title = fav.housing.title || '';
+    const city = fav.housing.city || '';
+    return title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           city.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   const sortedFavorites = [...filteredFavorites].sort((a, b) => {
     if (sortBy === 'recent') {
@@ -100,9 +77,6 @@ const Favoris = () => {
     <div className="favoris-page">
         <NavbarDash/>
       <header className="favoris-header">
-        <Link to="/" className="back-button">
-          <FaArrowLeft /> Retour
-        </Link>
         <h1><FaHeart /> Mes Favoris</h1>
       </header>
 
@@ -146,36 +120,31 @@ const Favoris = () => {
           </div>
         ) : (
           <div className="favorites-grid">
-            {sortedFavorites.map((favorite) => (
-              <div key={favorite.id} className="favorite-card">
-                <Link to={`/annonces/${favorite.housing.id}`} className="favorite-link">
-                  <div className="image-container">
-                    <img
-                      src={favorite.housing.main_image || '/static/default-housing.jpg'}
-                      alt={favorite.housing.title}
-                      onError={(e) => {
-                        e.target.src = '/static/default-housing.jpg';
-                      }}
-                    />
-                  </div>
-                  <div className="favorite-info">
-                    <h3>{favorite.housing.title}</h3>
-                    <p className="location">{favorite.housing.city}, {favorite.housing.country}</p>
-                    <p className="price">{favorite.housing.price} €/mois</p>
-                    <p className="date">
-                      Ajouté le {new Date(favorite.created_at).toLocaleDateString('fr-FR')}
-                    </p>
-                  </div>
-                </Link>
-                <button
-                  onClick={() => removeFavorite(favorite.housing.id)}
-                  className="remove-btn"
-                  aria-label="Supprimer des favoris"
-                >
-                  <FaTimes />
-                </button>
-              </div>
-            ))}
+            {sortedFavorites.map((favorite) => {
+              const annonce = favorite.housing;
+              const type = favorite.annonce_type;
+              return (
+                <React.Fragment key={favorite.id}>
+                  {type === 'proprietaire' && (
+                    <AnnonceProprietaire annonce={annonce} isFavoriPage />
+                  )}
+                  {type === 'coloc_proposeur' && (
+                    <AnnonceColocProposeur annonce={annonce} isFavoriPage />
+                  )}
+                  {type === 'coloc_chercheur' && (
+                    <AnnonceColocChercheur annonce={annonce} isFavoriPage />
+                  )}
+                  <button
+                    onClick={() => removeFavorite(annonce.id)}
+                    className="remove-btn"
+                    aria-label="Supprimer des favoris"
+                    style={{position:'absolute',top:10,right:10,zIndex:10}}
+                  >
+                    <FaTimes />
+                  </button>
+                </React.Fragment>
+              );
+            })}
           </div>
         )}
       </div>

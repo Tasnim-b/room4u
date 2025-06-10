@@ -129,11 +129,31 @@ const Messagerie = () => {
           <>
             <div className="chat-header">
               <div className="contact-info">
+                {/* Avatar du destinataire (personnalisé) */}
+                {selectedChat && selectedChat.participants_info && selectedChat.participants_info.length > 0 && (
+                  (() => {
+                    const destinataire = selectedChat.participants_info.find(u => String(u.id) !== String(userId));
+                    let avatarUrl = '';
+                    if (destinataire && destinataire.avatar) {
+                      // Si l'URL ne commence pas par http, on la préfixe par /media/
+                      avatarUrl = destinataire.avatar.startsWith('http') ? destinataire.avatar : `/media/${destinataire.avatar}`;
+                    }
+                    return destinataire && destinataire.avatar ? (
+                      <img className="avatar" src={avatarUrl} alt="avatar" />
+                    ) : (
+                      <div className="avatar" style={{background:'#e9edef',display:'flex',alignItems:'center',justifyContent:'center',color:'#aaa',fontWeight:'bold'}}>
+                        {destinataire && destinataire.nom ? destinataire.nom.charAt(0) : '?'}
+                      </div>
+                    );
+                  })()
+                )}
                 <h2>
-                  {selectedChat.participants_info
-                    .filter(u => String(u.id) !== String(userId))
-                    .map(u => `${u.nom} ${u.prenom}`)
-                    .join(', ')}
+                  {selectedChat && selectedChat.participants_info
+                    ? selectedChat.participants_info
+                        .filter(u => String(u.id) !== String(userId))
+                        .map(u => `${u.nom} ${u.prenom}`)
+                        .join(', ')
+                    : destinataireNom || 'Utilisateur'}
                 </h2>
               </div>
               <button onClick={refreshMessages}>Rafraîchir</button>

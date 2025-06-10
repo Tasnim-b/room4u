@@ -5,6 +5,8 @@ from .views import AnnonceUnifiedListView,CustomTokenObtainPairView,TokenRefresh
 from .views import RegisterView, CustomTokenObtainPairView, LogoutView,AnnonceProprietaireCreateView,CurrentUserView,UserUpdateView
 from .views import MesAnnoncesProprietaireListView,AnnonceColcChercheurViewSet,AnnonceColocProposeurViewSet
 from .views import ConversationListCreateView, MessageListCreateView
+from .views import AnnonceProprietaireDetailView
+from .views import FavorisCreateDeleteView,FavorisUserListView
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework.routers import DefaultRouter
 from django.conf import settings
@@ -23,9 +25,12 @@ urlpatterns = [
     path('me/', CurrentUserView.as_view(), name='current-user'),
     path('update/', UserUpdateView.as_view(), name='update-user'),
     path('annonces-proprietaire/', AnnonceProprietaireCreateView.as_view(), name='creer_annonce_proprietaire'),
+    path('annonces-proprietaire/<int:pk>/', AnnonceProprietaireDetailView.as_view(), name='annonce_proprietaire_detail'),
     path('mes-annonces-proprietaire/', MesAnnoncesProprietaireListView.as_view(), name='mes_annonces_proprietaire'),
     path('conversations/', ConversationListCreateView.as_view(), name='conversations'),
     path('conversations/<int:conversation_id>/messages/', MessageListCreateView.as_view(), name='messages'),
+    path('favoris/', FavorisCreateDeleteView.as_view(), name='favoris-create-delete'),
+    path('favoris-user/', FavorisUserListView.as_view(), name='favoris-user-list'),
     path('', include(router.urls)),
 
 

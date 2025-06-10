@@ -6,6 +6,7 @@ import {
   FaArrowRight,
   FaUser,
   FaRegClock,
+  FaHeart
 } from "react-icons/fa";
 import "../styles/annonceColocProposeur.css";
 
@@ -14,6 +15,7 @@ const AnnonceColocProposeur = () => {
   const [currentAnnonceIndex, setCurrentAnnonceIndex] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [annonces, setAnnonces] = useState([]);
+  const [favoris, setFavoris] = useState({});
 
   useEffect(() => {
     const fetchAnnonces = async () => {
@@ -82,6 +84,36 @@ const AnnonceColocProposeur = () => {
     return age;
   };
 
+  const handleFavori = async (annonce) => {
+    const token = localStorage.getItem('access_token');
+    const url = 'http://localhost:8000/favoris/';
+    const body = {
+      object_id: annonce.id,
+      model_name: 'annoncecolocproposeur'
+    };
+    if (!favoris[annonce.id]) {
+      await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(body)
+      });
+      setFavoris(prev => ({ ...prev, [annonce.id]: true }));
+    } else {
+      await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(body)
+      });
+      setFavoris(prev => ({ ...prev, [annonce.id]: false }));
+    }
+  };
+
   return (
     <>
       {annonces.map((annonce, index) => (
@@ -101,6 +133,9 @@ const AnnonceColocProposeur = () => {
               onClick={() => openPopup(index)}
             >
               Voir chambre
+            </button>
+            <button className="favori-btn" onClick={() => handleFavori(annonce)} style={{position:'absolute',top:10,right:10,background:'none',border:'none',cursor:'pointer'}}>
+              <FaHeart color={favoris[annonce.id] ? 'red' : 'grey'} size={28} />
             </button>
           </div>
 

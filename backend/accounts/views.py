@@ -8,8 +8,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.permissions import IsAuthenticated
-from .models import AnnonceColocProposeur,AnnonceColcChercheur,AnnonceProprietaire,Message,User,Conversation
-from .serializers import AnnonceUnifiedSerializer, AnnonceColcChercheurSerializer,AnnonceColocProposeurSerializer, AnnonceProprietaireSerializer,MessageSerializer,UserSerializer,RegisterSerializer,ConversationSerializer
+from .models import AnnonceColocProposeur,AnnonceColcChercheur,AnnonceProprietaire,Message,User,Conversation,Favoris
+from .serializers import AnnonceUnifiedSerializer, AnnonceColcChercheurSerializer,AnnonceColocProposeurSerializer, AnnonceProprietaireSerializer,MessageSerializer,UserSerializer,RegisterSerializer,ConversationSerializer,FavorisSerializer
 from .filters import AnnonceProprietaireFilter, AnnonceColcChercheurFilter,AnnonceColocProposeurFilter
 from django.contrib.auth.hashers import make_password
 from rest_framework.decorators import api_view, parser_classes
@@ -21,6 +21,8 @@ from rest_framework import permissions
 from .serializers import CustomTokenObtainPairSerializer,UserSerializerupdate,AnnonceProprietaireSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.exceptions import PermissionDenied
+from django.db import models
+from django.contrib.contenttypes.models import ContentType
 # Create your views here.
 #gestion de user 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -204,7 +206,12 @@ class ConversationListCreateView(generics.ListCreateAPIView):
         if not user_id:
             return Response({'error': 'user_id is required'}, status=400)
         other_user = User.objects.get(id=user_id)
-        conv = Conversation.objects.filter(participants=self.request.user).filter(participants=other_user).first()
+        # Correction : on filtre sur les deux participants avec des .filter() séparés
+        conv = Conversation.objects.annotate(num_participants=models.Count('participants'))\
+            .filter(num_participants=2)\
+            .filter(participants=self.request.user)\
+            .filter(participants=other_user)\
+            .first()
         if conv:
             serializer = self.get_serializer(conv)
             return Response(serializer.data)
@@ -226,3 +233,82 @@ class MessageListCreateView(generics.ListCreateAPIView):
         if self.request.user not in conversation.participants.all():
             raise PermissionDenied("Vous n'êtes pas dans cette conversation.")
         serializer.save(sender=self.request.user, conversation=conversation)
+
+class AnnonceProprietaireDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = AnnonceProprietaire.objects.all()
+    serializer_class = AnnonceProprietaireSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        # Limite l'accès à ses propres annonces
+        return AnnonceProprietaire.objects.filter(user=self.request.user)
+
+    def perform_update(self, serializer):
+        serializer.save(user=self.request.user)
+
+    def delete(self, request, *args, **kwargs):
+        # Optionnel : vérifier que l'utilisateur est bien le propriétaire
+        instance = self.get_object()
+        if instance.user != request.user:
+            return Response({'detail': "Vous n'êtes pas autorisé à supprimer cette annonce."}, status=403)
+        return super().delete(request, *args, **kwargs)
+
+class FavorisCreateDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Ajout d'un favori
+        user = request.user
+        object_id = request.data.get('object_id')
+        model_name = request.data.get('model_name')  # 'annonceproprietaire', 'annoncecolocproposeur', 'annoncecolcchercheur'
+        if not object_id or not model_name:
+            return Response({'error': 'object_id et model_name requis'}, status=400)
+        try:
+            content_type = ContentType.objects.get(model=model_name)
+        except ContentType.DoesNotExist:
+            return Response({'error': 'Type de modèle inconnu'}, status=400)
+        favori, created = Favoris.objects.get_or_create(user=user, content_type=content_type, object_id=object_id)
+        if created:
+            return Response({'status': 'added'}, status=201)
+        return Response({'status': 'already_exists'}, status=200)
+
+    def delete(self, request):
+        # Suppression d'un favori
+        user = request.user
+        object_id = request.data.get('object_id')
+        model_name = request.data.get('model_name')
+        if not object_id or not model_name:
+            return Response({'error': 'object_id et model_name requis'}, status=400)
+        try:
+            content_type = ContentType.objects.get(model=model_name)
+        except ContentType.DoesNotExist:
+            return Response({'error': 'Type de modèle inconnu'}, status=400)
+        Favoris.objects.filter(user=user, content_type=content_type, object_id=object_id).delete()
+        return Response({'status': 'deleted'}, status=204)
+
+class FavorisUserListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        favoris = Favoris.objects.filter(user=request.user).order_by('-created_at')
+        result = []
+        for fav in favoris:
+            housing = fav.housing
+            # Sérialisation complète selon le type d'annonce
+            if hasattr(housing, 'type_de_logement'):
+                serializer = AnnonceProprietaireSerializer(housing, context={'request': request})
+                annonce_type = 'proprietaire'
+            elif hasattr(housing, 'photo_de_chambre'):
+                serializer = AnnonceColocProposeurSerializer(housing, context={'request': request})
+                annonce_type = 'coloc_proposeur'
+            else:
+                serializer = AnnonceColcChercheurSerializer(housing, context={'request': request})
+                annonce_type = 'coloc_chercheur'
+            result.append({
+                'id': fav.id,
+                'housing': serializer.data,
+                'annonce_type': annonce_type,
+                'created_at': fav.created_at
+            })
+        return Response(result)

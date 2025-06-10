@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import '../styles/FormulaireProprietaire.css';
 import NavbarDash from '../components/NavbarDash';
 // Liste des gouvernorats et leurs délégations
@@ -30,6 +31,10 @@ const gouvernoratsDelegations = {
 };
 
 const FormulaireProprietaire = () => {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const annonceId = searchParams.get('id');
+
   const [formData, setFormData] = useState({
     gouvernorat: '',
     delegation: '',
@@ -92,6 +97,39 @@ const FormulaireProprietaire = () => {
     }
   }, []);
 
+  // Pré-remplir le formulaire si édition (annonceId dans l'URL)
+  useEffect(() => {
+    if (annonceId) {
+      fetch(`http://localhost:8000/annonces-proprietaire/${annonceId}/`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      })
+        .then(res => res.json())
+        .then(annonce => {
+          setFormData({
+            gouvernorat: annonce.gouvernorat || '',
+            delegation: annonce.delegation || '',
+            phone: annonce.phone || '',
+            description: annonce.description || '',
+            date_pub_annonce: annonce.date_pub_annonce || '',
+            type_annonce: annonce.type_annonce || '',
+            type_de_logement: annonce.type_de_logement || '',
+            nombre_pieces: annonce.nombre_pieces || '',
+            superficie: annonce.superficie || '',
+            photos: [], // L'utilisateur doit re-uploader s'il veut changer
+            commodites: annonce.commodites || '',
+            regles: annonce.regles || '',
+            date_de_disponibilite: annonce.date_de_disponibilite || '',
+            loyer: annonce.loyer || '',
+            caution: annonce.caution || '',
+            meuble: annonce.meuble || '',
+            colocataire_déjà_existant: annonce.colocataire_déjà_existant || ''
+          });
+        });
+    }
+  }, [annonceId]);
+
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
     
@@ -112,39 +150,40 @@ const FormulaireProprietaire = () => {
 
 const handleSubmit = async (e) => {
   e.preventDefault();
-
-  // 1. Prépare les données
   const data = new FormData();
   for (let key in formData) {
     if (key === "photos") {
-      // Envoie la première photo comme photo_de_maison (champ requis côté backend)
       if (formData.photos && formData.photos.length > 0) {
         data.append("photo_de_maison", formData.photos[0]);
-        // Si tu veux gérer les autres photos plus tard, tu peux les traiter ici
-        // Exemple :
-        // const additional = formData.photos.slice(1).map(f => f.name); // ou autre logique
-        // data.append('additional_photos', JSON.stringify(additional));
       }
     } else {
       data.append(key, formData[key]);
     }
   }
-
   try {
-    // 2. Envoie vers l'API
-    const res = await fetch('http://localhost:8000/annonces-proprietaire/', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-      },
-      body: data,
-    });
-
-    // 3. Traitement de la réponse
+    let res;
+    if (annonceId) {
+      // Edition : PUT
+      res = await fetch(`http://localhost:8000/annonces-proprietaire/${annonceId}/`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: data,
+      });
+    } else {
+      // Création : POST
+      res = await fetch('http://localhost:8000/annonces-proprietaire/', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: data,
+      });
+    }
     if (res.ok) {
-      const newAnnonce = await res.json();
-      // Redirige vers la page de détail de l'annonce
-      window.location.href = `/AnnoncePro/${newAnnonce.id}`;
+      // Redirection vers MesAnnonces après succès
+      window.location.href = '/MesAnnonces';
     } else {
       alert('Erreur lors de la publication !');
     }
